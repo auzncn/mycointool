@@ -7,22 +7,30 @@ import java.util.Date;
 
 @Data
 public class ATHVO {
-    @ExcelProperty(value = "价格",index = 3)
-    private double current_price_usd;
-    @ExcelProperty(value = "币种",index = 1)
-    private String code;
-    @ExcelProperty(value = "全称",index = 2)
+    @ExcelProperty(value = "市值排名", index = 0)
+    private int market_cap_rank;
+    @ExcelProperty(value = "币种", index = 1)
+    private String symbol;
+    @ExcelProperty(value = "全称", index = 2)
     private String name;
-    @ExcelProperty(value = "排名",index = 0)
-    private int rank;
-    @ExcelProperty(value = "最高价",index = 4)
-    private double high_price;
-    @ExcelProperty(value = "ATH跌幅",index = 8)
-    private double drop_ath;
-    @ExcelProperty(value = "最低价",index = 6)
-    private double low_price;
-    @ExcelProperty(value = "最高价时间",index = 5)
-    private Date high_time;
-    @ExcelProperty(value = "最低价时间",index = 7)
-    private Date low_time;
+    @ExcelProperty(value = "市值", index = 3)
+    private long market_cap;
+    @ExcelProperty(value = "当前价格", index = 4)
+    private double current_price;
+    @ExcelProperty(value = "ATH", index = 5)
+    private double ath;
+    @ExcelProperty(value = "ATH时间", index = 6)
+    private Date ath_date;
+    @ExcelProperty(value = "ATL", index = 7)
+    private double atl;
+    @ExcelProperty(value = "ATL时间", index = 8)
+    private Date atl_date;
+    @ExcelProperty(value = "ATH跌幅", index = 9)
+    private double ath_change_percentage;
+    @ExcelProperty(value = "ATL涨幅", index = 10)
+    private double atl_change_percentage;
+
+
+
+
 }

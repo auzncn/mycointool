@@ -51,21 +51,14 @@ class CointoolApplicationTests {
 
     @Test
     void getDropATH() {
-        List<ATHVO> athList = new ArrayList<>();
-        String url = "https://dncapi.soulbab.com/api/coin/web-coinrank?page=%d";
-        for (int i = 1; i < 11; i++) {
-            String format = String.format(url, i);
-            String result = HttpRequest.get(format)
-                    .setHttpProxy("127.0.0.1", 1080)
-                    .execute().body();
-            JSONObject jsonObject = JSONObject.parseObject(result);
-            if (jsonObject.getInteger("code").equals(200)) {
-                JSONArray jsonArray = jsonObject.getJSONArray("data");
-                List<ATHVO> list = jsonArray.toJavaList(ATHVO.class);
-                athList.addAll(list);
-            }
-        }
-        List<ATHVO> collect = athList.stream().sorted(Comparator.comparing(ATHVO::getDrop_ath)).collect(Collectors.toList());
+        String url = "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=500&page=1&sparkline=false&locale=en";
+        String result = HttpRequest.get(url)
+                .setHttpProxy("127.0.0.1", 1080)
+                .execute().body();
+        JSONArray jsonArray = JSONArray.parseArray(result);
+        List<ATHVO> athList = jsonArray.toJavaList(ATHVO.class);
+        List<ATHVO> collect = athList.stream().sorted(Comparator.comparing(ATHVO::getAth_change_percentage)).collect(Collectors.toList());
+//        System.out.println(collect);
         String fileName = System.getProperty("user.dir") + "/ATH跌幅排名(" + DateUtil.format(new Date(), "yyyy-MM-dd") + ").xlsx";
         EasyExcel.write(fileName, ATHVO.class).sheet("ATH跌幅排名").doWrite(collect);
     }
