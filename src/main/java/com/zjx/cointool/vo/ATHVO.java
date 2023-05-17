@@ -29,8 +29,7 @@ public class ATHVO {
     private double ath_change_percentage;
     @ExcelProperty(value = "ATL涨幅", index = 10)
     private double atl_change_percentage;
-
-
+    private double drop_ath;
 
 
 }
