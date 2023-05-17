@@ -14,10 +14,10 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @SpringBootTest
-class CointoolApplicationTests {
+public class CointoolApplicationTests {
 
     @Test
-    void getBUSDPair() {
+    public void getBUSDPair() {
         List<GetPairVO> pairList = new ArrayList<>();
         String url = "https://api.coinmarketcap.com/data-api/v3/exchange/market-pairs/latest?slug=binance&category=spot&start=%d&limit=1000";
         int start = 1;
@@ -50,7 +50,7 @@ class CointoolApplicationTests {
     }
 
     @Test
-    void getDropATH() {
+    public void getDropATH() {
         List<ATHVO> athList = new ArrayList<>();
         String url = "https://dncapi.soulbab.com/api/coin/web-coinrank?page=%d";
         for (int i = 1; i < 11; i++) {
