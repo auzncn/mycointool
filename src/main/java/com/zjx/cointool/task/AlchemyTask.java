@@ -2,7 +2,7 @@ package com.zjx.cointool.task;
 
 import cn.hutool.http.HttpRequest;
 import com.alibaba.excel.util.StringUtils;
-import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.zjx.cointool.bean.WatchList;
@@ -10,7 +10,6 @@ import com.zjx.cointool.service.WatchListService;
 import com.zjx.cointool.util.DingUtil;
 import com.zjx.cointool.vo.alchemy.AlchemyResVO;
 import com.zjx.cointool.vo.alchemy.TransactionVO;
-import lombok.SneakyThrows;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -27,6 +26,8 @@ public class AlchemyTask {
     private StringRedisTemplate stringRedisTemplate;
     @Resource
     private WatchListService watchListService;
+    @Resource
+    private DingUtil dingUtil;
     @Value("${alchemy-key}")
     private String key;
 
@@ -34,7 +35,7 @@ public class AlchemyTask {
     private static final String[] chains = new String[]{"eth-mainnet", "arb-mainnet"};
     private static final String txInfo = "https://explorer.phalcon.xyz/tx/%s/%s";
 
-    @Scheduled(cron = "0 0/5 * * * ?")
+    @Scheduled(cron = "0 0/10 * * * ?")
     public void scanWatchList() throws InterruptedException {
         Map<String, Object> map = new HashMap<>();
         map.put("id", "1");
@@ -45,7 +46,7 @@ public class AlchemyTask {
         params.put("toBlock", "latest");
         params.put("withMetadata", true);
         params.put("excludeZeroValue", true);
-        params.put("maxCount", "0xA");
+        params.put("maxCount", "0x1E");
         params.put("category", Arrays.asList("external", "erc20", "internal"));
         params.put("order", "desc");
 
@@ -70,8 +71,7 @@ public class AlchemyTask {
                         .body(s1)
                         .timeout(20000)
                         .execute().body();
-                long etime = System.currentTimeMillis();
-                System.out.printf("网络请求时长：%d 毫秒.", (etime - stime));
+
                 JSONObject receiveJson = JSONObject.parseObject(receiveResult);
                 List<AlchemyResVO> receiveResList = receiveJson.getJSONObject("result").getJSONArray("transfers").toJavaList(AlchemyResVO.class);
                 Map<String, List<AlchemyResVO>> receiveMap = receiveResList.stream().collect(Collectors.groupingBy(AlchemyResVO::getHash));
@@ -90,6 +90,8 @@ public class AlchemyTask {
                         .timeout(20000)
                         .execute().body();
 
+                long etime = System.currentTimeMillis();
+                System.out.println("查询" + w.getTag() + "网络" + chain + formatUrl + "用时" + (etime - stime) + "毫秒");
                 JSONObject sendJson = JSONObject.parseObject(sendResult);
                 List<AlchemyResVO> sendResList = sendJson.getJSONObject("result").getJSONArray("transfers").toJavaList(AlchemyResVO.class);
                 Map<String, List<AlchemyResVO>> sendMap = sendResList.stream().collect(Collectors.groupingBy(AlchemyResVO::getHash));
@@ -187,7 +189,7 @@ public class AlchemyTask {
                             }
                             msgList.add(info);
                             String msg = String.join("\n\n", msgList);
-                            DingUtil.ding(msg);
+                            dingUtil.ding(msg);
                         }
                     }
                 }

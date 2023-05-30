@@ -2,18 +2,25 @@ package com.zjx.cointool.util;
 
 import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson2.JSON;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 
+@Component
 public class DingUtil {
-    public static void ding(String message) {
-        String webhook = "webhoolk";
+    @Value("${ding-webhook}")
+    private String webhook;
+
+    public void ding(String message) {
 
         HashMap<String, Object> paramMap = new HashMap<>();
         HashMap<String, Object> textMap = new HashMap<>();
         textMap.put("content", message);
         paramMap.put("msgtype", "text");
         paramMap.put("text", textMap);
-        String result = HttpUtil.post(webhook, JSON.toJSONString(paramMap));
+        HttpUtil.post(webhook, JSON.toJSONString(paramMap));
     }
+
+
 }

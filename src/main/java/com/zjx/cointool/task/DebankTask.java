@@ -29,8 +29,10 @@ public class DebankTask {
     private StringRedisTemplate stringRedisTemplate;
     @Resource
     private WatchListService watchListService;
+    @Resource
+    private DingUtil dingUtil;
 
-//    @Scheduled(cron = "0 */10 * * * ?")
+    //    @Scheduled(cron = "0 */10 * * * ?")
     public void scanWatchList() throws InterruptedException {
         List<WatchList> list = watchListService.list(new QueryWrapper<WatchList>().eq("active", 1));
         for (WatchList watchList : list) {
@@ -171,7 +173,7 @@ public class DebankTask {
                                         }
                                         String join = String.join("\n", l);
                                         System.out.println(join);
-                                        DingUtil.ding(join);
+                                        dingUtil.ding(join);
                                     }
                                 }
                                 stringRedisTemplate.opsForValue().set(watchList.getId(), JSONObject.toJSONString(newList));

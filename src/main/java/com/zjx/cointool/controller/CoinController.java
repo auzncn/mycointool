@@ -5,6 +5,7 @@ import com.zjx.cointool.bean.WatchList;
 import com.zjx.cointool.service.WatchListService;
 import com.zjx.cointool.task.AlchemyTask;
 import com.zjx.cointool.task.DebankTask;
+import com.zjx.cointool.task.KimchiTask;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -20,6 +21,8 @@ public class CoinController {
     private WatchListService watchListService;
     @Resource
     private AlchemyTask alchemyTask;
+    @Resource
+    private KimchiTask kimchiTask;
 
     @GetMapping("get_list")
     public void getList() throws InterruptedException {
@@ -48,5 +51,10 @@ public class CoinController {
     @GetMapping("scan_watch_list")
     public void scan_watch_list() throws InterruptedException {
         alchemyTask.scanWatchList();
+    }
+
+    @GetMapping("kimchi_premium")
+    public void kimchi_premium() throws InterruptedException {
+        kimchiTask.kimchiPremium();
     }
 }
