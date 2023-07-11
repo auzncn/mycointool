@@ -1,6 +1,8 @@
 package com.zjx.cointool.task;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.http.HttpRequest;
+import cn.hutool.http.HttpUtil;
 import com.alibaba.excel.util.StringUtils;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
@@ -31,11 +33,20 @@ public class AlchemyTask {
     @Value("${alchemy-key}")
     private String key;
 
-    private static final String url = "https://%s.g.alchemy.com/v2/%s";
-    private static final String[] chains = new String[]{"eth-mainnet", "arb-mainnet"};
-    private static final String txInfo = "https://explorer.phalcon.xyz/tx/%s/%s";
+    private static final String URL = "https://%s.g.alchemy.com/v2/%s";
+    //    private static final String[] CHAINS = new String[]{"eth-mainnet", "arb-mainnet"};
+    private static final String TX_INFO = "https://explorer.phalcon.xyz/tx/%s/%s";
 
-    @Scheduled(cron = "0 0/10 * * * ?")
+    private static final String CHECK_TX = "https://api.tenderly.co/api/v1/public-contract/%d/tx/%s";
+
+    private static final HashMap<String, Integer> CHAIN_MAP = new HashMap<String, Integer>() {
+        {
+            put("eth-mainnet", 1);
+            put("arb-mainnet", 42161);
+        }
+    };
+
+//    @Scheduled(cron = "0 0/10 * * * ?")
     public void scanWatchList() throws InterruptedException {
         Map<String, Object> map = new HashMap<>();
         map.put("id", "1");
@@ -52,14 +63,14 @@ public class AlchemyTask {
 
         List<WatchList> watchList = watchListService.list(new QueryWrapper<WatchList>().eq("active", 1));
         for (WatchList w : watchList) {
-            for (String chain : chains) {
+            for (String chain : CHAIN_MAP.keySet()) {
                 params.remove("toAddress");
                 params.remove("fromAddress");
                 if (!chain.equals("eth-mainnet")) {
                     params.put("category", Arrays.asList("erc20", "external"));
                 }
 
-                String formatUrl = String.format(url, chain, key);
+                String formatUrl = String.format(URL, chain, key);
                 params.put("toAddress", w.getId());
                 map.put("params", params);
                 String s1 = JSONObject.toJSONString(map);
@@ -127,7 +138,9 @@ public class AlchemyTask {
                                 BeanUtils.copyProperties(a, sendReceive);
                                 sendReceive.setReceiveFrom(a.getFrom());
                             } else {
-                                sendReceive.setValue(a.getValue().add(sendReceive.getValue()));
+                                if (a.getValue() != null && sendReceive.getValue() != null) {
+                                    sendReceive.setValue(a.getValue().add(sendReceive.getValue()));
+                                }
                             }
                             receiveAddressMap.put(a.getRawContract().getAddress(), sendReceive);
                         });
@@ -153,7 +166,9 @@ public class AlchemyTask {
                                 BeanUtils.copyProperties(a, sendReceive);
                                 sendReceive.setReceiveFrom(a.getFrom());
                             } else {
-                                sendReceive.setValue(a.getValue().add(sendReceive.getValue()));
+                                if (a.getValue() != null && sendReceive.getValue() != null) {
+                                    sendReceive.setValue(a.getValue().add(sendReceive.getValue()));
+                                }
                             }
                             receiveAddressMap.put(a.getRawContract().getAddress(), sendReceive);
                         });
@@ -173,7 +188,22 @@ public class AlchemyTask {
                         String hash = transaction.getHash();
                         List<String> oldHashList = cacheList.stream().map(TransactionVO::getHash).collect(Collectors.toList());
                         if (!oldHashList.contains(hash)) {
-                            noticeList.add(transaction);
+                            if (CollUtil.isNotEmpty(transaction.getSend())) {
+                                Integer chainId = CHAIN_MAP.get(chain);
+                                try {
+                                    String checkJson = HttpUtil.get(String.format(CHECK_TX, chainId, hash));
+                                    JSONObject checkObject = JSONObject.parseObject(checkJson);
+                                    String from = checkObject.getString("from");
+                                    if (from.equalsIgnoreCase(w.getId())) {
+                                        noticeList.add(transaction);
+                                    }
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                    noticeList.add(transaction);
+                                }
+                            } else {
+                                noticeList.add(transaction);
+                            }
                             updateCache = true;
                         }
                     }
@@ -183,9 +213,9 @@ public class AlchemyTask {
                             List<String> msgList = noticeTx.generateMsg();
                             String info = "";
                             if (chain.equals("eth-mainnet")) {
-                                info = String.format(txInfo, "eth", noticeTx.getHash());
+                                info = String.format(TX_INFO, "eth", noticeTx.getHash());
                             } else if (chain.equals("arb-mainnet")) {
-                                info = String.format(txInfo, "arbitrum", noticeTx.getHash());
+                                info = String.format(TX_INFO, "arbitrum", noticeTx.getHash());
                             }
                             msgList.add(info);
                             String msg = String.join("\n\n", msgList);
