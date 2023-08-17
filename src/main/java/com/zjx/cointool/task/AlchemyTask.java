@@ -46,7 +46,7 @@ public class AlchemyTask {
         }
     };
 
-//    @Scheduled(cron = "0 0/10 * * * ?")
+    @Scheduled(cron = "0 0/10 * * * ?")
     public void scanWatchList() throws InterruptedException {
         Map<String, Object> map = new HashMap<>();
         map.put("id", "1");
